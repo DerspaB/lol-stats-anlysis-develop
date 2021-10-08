@@ -1,13 +1,16 @@
 from django.shortcuts import render, HttpResponse
 from django.http import JsonResponse, response
+from pandas.core.frame import DataFrame
 import requests
+import pandas as pd
+import time
 
 # Create your views here.
 
-API_KEY = 'RGAPI-617c8d8f-b131-446b-8eec-b0f852ea8a98'
+API_KEY = 'RGAPI-8af9804e-23b1-4996-a294-517e4b29989f'
 
 def ok(request):
-    return render(request, 'ok.htm')
+    return 
 
 def getSummonerByName(request = None):
     summonerName = 'GeneralSn1per'
@@ -32,19 +35,32 @@ def SummonerByLeague():
     return response
 
 def getMatches(request):
+    urlMatch = f""
     summonersLeague = SummonerByLeague()
+    urlMatch = f"https://americas.api.riotgames.com/lol/match/v5/matches/"
     
 
     for index, summoner in enumerate(summonersLeague['entries']):
         puuid =  SummonerByName(summoner['summonerName'])['puuid']
-        if index == 10:
+        if index == 1:
             break
         else:
-            urlMatches = f"https://americas.api.riotgames.com/lol/match/v5/matches/by-puuid/{puuid}/ids?start=0&count=100&api_key={API_KEY}"
-            response = requests.get(urlMatches).json()
-            print(response)
+            urlByPuuid = f"{urlMatch}by-puuid/{puuid}/ids?start=0&count=100&api_key={API_KEY}"
+            response = requests.get(urlByPuuid).json()
+            for i, match in enumerate(response):
+                urlByMatchId = f"{urlMatch}{match}?api_key={API_KEY}"
+                matchStatsResponse = requests.get(urlByMatchId).json()
+                if i == 1:
+                    break
+                else:
+                    teams = matchStatsResponse['info']['teams']
+                    for team in teams:
+                        objectives = team['objectives']
+                        df = pd.DataFrame(objectives)
+                        print(df)
+                
     
-    return HttpResponse('Holi xD')
+    return JsonResponse(matchStatsResponse)
     
 
 
