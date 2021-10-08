@@ -39,28 +39,74 @@ def getMatches(request):
     summonersLeague = SummonerByLeague()
     urlMatch = f"https://americas.api.riotgames.com/lol/match/v5/matches/"
     
-
+    data = pd.DataFrame()
     for index, summoner in enumerate(summonersLeague['entries']):
         puuid =  SummonerByName(summoner['summonerName'])['puuid']
         if index == 1:
             break
         else:
-            urlByPuuid = f"{urlMatch}by-puuid/{puuid}/ids?start=0&count=100&api_key={API_KEY}"
+            urlByPuuid = f"{urlMatch}by-puuid/{puuid}/ids?start=0&count=20&api_key={API_KEY}"
             response = requests.get(urlByPuuid).json()
             for i, match in enumerate(response):
                 urlByMatchId = f"{urlMatch}{match}?api_key={API_KEY}"
                 matchStatsResponse = requests.get(urlByMatchId).json()
-                if i == 1:
+                if i == 20:
                     break
                 else:
                     teams = matchStatsResponse['info']['teams']
+                    dataTeams = []
                     for team in teams:
+                        dataTeam = {
+                        'idTeam': None,
+                        'firstBaron': None,
+                        'killsBaron': None,
+                        'firstChampion': None,
+                        'killsChampion': None,
+                        'firstDragon': None,
+                        'killsDragon': None,
+                        'firstInhibitor': None,
+                        'killsInhibitor': None,
+                        'firstRiftHerald': None,
+                        'killsRiftHerald': None,
+                        'firstTower': None,
+                        'killsTower': None,
+                        'win': None,
+                    }
+                        dataTeam['idTeam'] = team['teamId']
+                        dataTeam['win'] = team['win']
                         objectives = team['objectives']
-                        df = pd.DataFrame(objectives)
-                        print(df)
+                        dataTeam['firstBaron'] = objectives['baron']['first']
+                        dataTeam['killsBaron'] = objectives['baron']['kills']
+                        dataTeam['firstChampion'] = objectives['champion']['first']
+                        dataTeam['killsChampion'] = objectives['champion']['kills']
+                        dataTeam['firstDragon'] = objectives['dragon']['first']
+                        dataTeam['killsDragon'] = objectives['dragon']['kills']
+                        dataTeam['firstInhibitor'] = objectives['inhibitor']['first']
+                        dataTeam['killsInhibitor'] = objectives['inhibitor']['kills']
+                        dataTeam['firstRiftHerald'] = objectives['riftHerald']['first']
+                        dataTeam['killsRiftHerald'] = objectives['riftHerald']['kills']
+                        dataTeam['firstTower'] = objectives['tower']['first']
+                        dataTeam['killsTower'] = objectives['tower']['kills']
+                        dataTeams.append(dataTeam)
+                    df = pd.DataFrame(dataTeams)
+                    data = pd.concat([df,data])
+    print(data)
                 
     
     return JsonResponse(matchStatsResponse)
+
+    # [   
+    #     {
+    #         'idTeam': 123,
+    #         'firstBaron': True,
+    #         'killsBaron': 2,
+    #     },
+    #     {
+    #         'idTeam': 456,
+    #         'firstBaron': False, 
+    #         'killsBaron': 0,
+    #     }
+    # ]
     
 
 
